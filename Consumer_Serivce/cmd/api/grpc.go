@@ -58,7 +58,8 @@ func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer
 			SensorValue: payload.GetSensorValue(),
 			ID1:         payload.GetId1(),
 			ID2:         payload.GetId2(),
-			Timestamp:   timestamp.Format("2006-01-02 15:04:05"),
+			// Timestamp:   timestamp.Format("2006-01-02 15:04:05"),
+			Timestamp: timestamp,
 		}
 
 		err = s.Storage.Sensor.InsertSensorData(stream.Context(), dbData)

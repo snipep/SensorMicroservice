@@ -94,3 +94,56 @@ func (app *Application) getSensorHistory(c echo.Context) error {
 	app.logger.Infow("sensor history fetched successfully", "start", req.StartTime, "end", req.EndTime)
 	return nil
 }
+
+
+// --- NEW: Define a struct for the combined history request payload ---
+type getSensorHistoryByIDsRequest struct {
+	ID1       string `json:"id1"`
+	ID2       int32  `json:"id2"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+}
+
+// Existing handlers...
+// func (app *Application) getSensorByIDs(c echo.Context) error { ... }
+// func (app *Application) getSensorHistory(c echo.Context) error { ... }
+
+// --- NEW: Handler for fetching data by IDs and time duration ---
+func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
+	var req getSensorHistoryByIDsRequest
+	if err := readJSON(c, &req); err != nil {
+		app.logger.Errorw("failed to read or parse JSON for combined history request", "error", err)
+		return app.badRequestResponse(c, err)
+	}
+
+	// Parse the start and end time strings
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		app.logger.Errorw("invalid start_time format", "start_time", req.StartTime, "error", err)
+		return app.badRequestResponse(c, err)
+	}
+
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		app.logger.Errorw("invalid end_time format", "end_time", req.EndTime, "error", err)
+		return app.badRequestResponse(c, err)
+	}
+
+	// Call the new store method with all parameters
+	sensors, err := app.store.Sensor.GetSensorHistoryByIDs(req.ID1, req.ID2, startTime, endTime)
+	log.Println("sensors:", sensors)
+	if err != nil {
+		app.logger.Errorw("failed to fetch combined sensor history", "id1", req.ID1, "id2", req.ID2, "error", err)
+		return app.internalServerError(c, err)
+	}
+
+	// Write the successful response
+	err = app.jsonResponse(c, http.StatusOK, sensors)
+	if err != nil {
+		app.logger.Errorw("failed to write JSON response for combined history", "error", err)
+		return app.internalServerError(c, err)
+	}
+
+	app.logger.Infow("combined sensor history fetched successfully", "id1", req.ID1, "id2", req.ID2)
+	return nil
+}

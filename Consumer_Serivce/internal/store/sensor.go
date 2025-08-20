@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type SensorData struct {
 	SensorValue float32 `json:"sensor_value"`
 	ID1         string  `json:"id1"`
 	ID2         int32   `json:"id2"`
-	Timestamp   string  `json:"timestamp"`
+	Timestamp   time.Time  `json:"timestamp"`
 }
 
 func (s SensorStore) InsertSensorData(ctx context.Context, data SensorData) error {
@@ -95,7 +96,6 @@ func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorDa
 	defer rows.Close()
 
 	var sensors []SensorData
-
 	for rows.Next() {
 		var sensor SensorData
 		// The Scan function will correctly parse the database's DATETIME format into the time.Time field.
@@ -111,6 +111,50 @@ func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorDa
 		}
 		sensors = append(sensors, sensor)
 	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	log.Print("sensors:", sensors)
+	return sensors, nil
+}
+
+// --- NEW: Function to get sensor readings for specific IDs within a time range ---
+func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time) ([]SensorData, error) {
+	query := `
+        SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
+        FROM sensor_readings r
+        INNER JOIN sensors s ON r.id1 = s.id1
+        WHERE r.id1 = ? 
+          AND r.id2 = ? 
+          AND r.timestamp BETWEEN ? AND ?
+        ORDER BY r.timestamp ASC`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, query, id1, id2, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sensors []SensorData
+	for rows.Next() {
+		var sensor SensorData
+		err := rows.Scan(
+			&sensor.ID1,
+			&sensor.ID2,
+			&sensor.SensorValue,
+			&sensor.Timestamp,
+			&sensor.SensorType,
+		)
+		if err != nil {
+			return nil, err
+		}
+		sensors = append(sensors, sensor)
+	}
+	log.Print("sensors:", sensors)
 
 	if err = rows.Err(); err != nil {
 		return nil, err

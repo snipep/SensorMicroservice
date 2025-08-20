@@ -33,8 +33,9 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	// --Routes--
 	apiGroup := e.Group("api/v1")
 	sensordata := apiGroup.Group("/sensordata")
-	sensordata.GET("/IDs", app.getSensorByIDs)
+	sensordata.GET("/query", app.getSensorByIDs)
 	sensordata.GET("/history", app.getSensorHistory)
+	sensordata.GET("/query/history", app.getSensorHistoryByIDs)
 
 }
 
