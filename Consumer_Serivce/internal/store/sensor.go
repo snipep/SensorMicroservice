@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 type SensorStore struct {
@@ -72,4 +73,48 @@ func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32) (*SensorData, error)
 		return nil, err
 	}
 	return sensor, nil
+}
+
+
+// --- NEW: Function to get all sensor readings within a time range ---
+func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorData, error) {
+	query := `
+        SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
+        FROM sensor_readings r
+        INNER JOIN sensors s ON r.id1 = s.id1
+        WHERE r.timestamp BETWEEN ? AND ?
+        ORDER BY r.timestamp ASC`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, query, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sensors []SensorData
+
+	for rows.Next() {
+		var sensor SensorData
+		// The Scan function will correctly parse the database's DATETIME format into the time.Time field.
+		err := rows.Scan(
+			&sensor.ID1,
+			&sensor.ID2,
+			&sensor.SensorValue,
+			&sensor.Timestamp,
+			&sensor.SensorType,
+		)
+		if err != nil {
+			return nil, err
+		}
+		sensors = append(sensors, sensor)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return sensors, nil
 }

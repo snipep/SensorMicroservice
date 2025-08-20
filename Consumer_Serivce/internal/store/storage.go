@@ -14,6 +14,7 @@ type Storage struct {
 	Sensor interface{
 		InsertSensorData(ctx context.Context, data SensorData) error
 		GetSensorByIDs(id1 string, id2 int32) (*SensorData, error)
+		GetSensorHistory(startTime, endTime time.Time) ([]SensorData, error)
 	}
 }
 

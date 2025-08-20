@@ -34,6 +34,7 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	apiGroup := e.Group("api/v1")
 	sensordata := apiGroup.Group("/sensordata")
 	sensordata.GET("/IDs", app.getSensorByIDs)
+	sensordata.GET("/history", app.getSensorHistory)
 
 }
 
