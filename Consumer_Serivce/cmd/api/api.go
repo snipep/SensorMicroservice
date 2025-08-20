@@ -28,7 +28,17 @@ type Config struct {
 	db dbConfig
 }
 
+
+func (app *Application) RegiterRoutes(e *echo.Echo) {
+	// --Routes--
+	apiGroup := e.Group("api/v1")
+	sensordata := apiGroup.Group("/sensordata")
+	sensordata.GET("/IDs", app.getSensorByIDs)
+
+}
+
 func (app *Application) run(echo *echo.Echo) error {
+	app.RegiterRoutes(echo)
 	srv := http.Server{
 		Addr:    app.config.addr,
 		Handler: echo,
@@ -40,12 +50,3 @@ func (app *Application) run(echo *echo.Echo) error {
 	app.logger.Infow("Server has started", "addr", app.config.addr)
 	return srv.ListenAndServe()
 }
-
-// func (app *Application) RegiterRoutes(e *echo.Echo) {
-// 	e.Use(middleware.Logger())
-// 	e.Use(middleware.Recover())
-
-// 	// --Routes--
-// 	// apiGroup := e.Group("api/v1")
-
-// }

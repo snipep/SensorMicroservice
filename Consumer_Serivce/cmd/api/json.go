@@ -3,28 +3,35 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
-func writeJSON(w http.ResponseWriter, status int, data any) error {
-	w.Header().Set("Content-Type", "Application/json")
-	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(data)
+func writeJSON(c echo.Context, status int, data any) error {
+	
+	return c.JSON(status, data)
 }
 
-func readJSON(w http.ResponseWriter, r *http.Request, data any) error {
-	maxBytes := 1_048_578
-	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+func readJSON(c echo.Context, data any) error {
+	// Limit body size (1MB max)
+	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, 1_048_576)
 
-	decoder := json.NewDecoder(r.Body)
+	decoder := json.NewDecoder(c.Request().Body)
 	decoder.DisallowUnknownFields()
 
 	return decoder.Decode(data)
 }
 
-func writeJSONError(w http.ResponseWriter, status int, message string) error {
-	type envelop struct {
+func writeJSONError(c echo.Context, status int, message string) error {
+	type envelope struct {
 		Error string `json:"error"`
 	}
+	return writeJSON(c, status, &envelope{Error: message})
+}
 
-	return writeJSON(w, status, &envelop{Error: message})
+func (app *Application) jsonResponse(c echo.Context, status int, data any) error {
+	type envelop struct {
+		Data any `json:"data"`
+	}
+	return writeJSON(c, status, &envelop{Data: data})
 }

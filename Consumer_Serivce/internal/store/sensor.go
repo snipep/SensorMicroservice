@@ -43,6 +43,33 @@ func (s SensorStore) InsertSensorData(ctx context.Context, data SensorData) erro
 	if err != nil {
 		return err
 	}
-
 	return nil
+}
+
+
+func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32) (*SensorData, error) {
+	// --- FIX: Use a JOIN to get sensor_type from the 'sensors' table ---
+	query := `
+        SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
+        FROM sensor_readings r
+        INNER JOIN sensors s ON r.id1 = s.id1
+        WHERE r.id1 = ? AND r.id2 = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+	row := s.db.QueryRowContext(ctx, query, id1, id2)
+
+	sensor := &SensorData{}
+	// --- FIX: Add sensor.SensorType to the Scan arguments ---
+	err := row.Scan(
+		&sensor.ID1,
+		&sensor.ID2,
+		&sensor.SensorValue,
+		&sensor.Timestamp,
+		&sensor.SensorType,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return sensor, nil
 }
