@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// ---- Load environment variables from .env file ----
-	err := godotenv.Load("../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	} 
@@ -51,7 +51,7 @@ func main() {
 
 	logger.Info("database connection established")
 	store := store.NewStorage(db)
-
+	
 	app := Application{
 		config: cfg,
 		store: store,
@@ -68,7 +68,7 @@ func main() {
 	// Create a new gRPC server instance.
 	s := grpc.NewServer()
 	// Register our server implementation with the gRPC server.
-	sensor.RegisterSensorServiceServer(s, &Server{})
+	sensor.RegisterSensorServiceServer(s, NewServer(store))
 	log.Println("Server listening at", lis.Addr())
 	go func() {
 		if err := s.Serve(lis); err != nil {

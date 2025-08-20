@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	sensor "github.com/snipep/Assessment/Consumer-Service/Proto"
+	"github.com/snipep/Assessment/Consumer-Service/internal/store"
 )
 
 type Server struct {
 	sensor.UnimplementedSensorServiceServer
+	Storage *store.Storage
+}
+
+func NewServer(storage *store.Storage) *Server {
+	return &Server{
+		Storage: storage,
+	}
 }
 
 func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer) error {
@@ -36,9 +45,29 @@ func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer
 			return err
 		}
 
-		// Process the received data by getting the payload.
-		data := req.GetData()
-		log.Printf("Received: Type=%s, Value=%.2f, ID1=%s, ID2=%d",data.GetSensorType(), data.GetSensorValue(), data.GetId1(), data.GetId2())
+		payload := req.GetData()
+		var timestamp time.Time
+		if payload.GetTimestamp() == nil {
+			timestamp = time.Now()
+		} else {
+			timestamp = payload.GetTimestamp().AsTime()
+		}
+		
+		dbData := store.SensorData{
+			SensorType:  payload.GetSensorType(),
+			SensorValue: payload.GetSensorValue(),
+			ID1:         payload.GetId1(),
+			ID2:         payload.GetId2(),
+			Timestamp:   timestamp.Format("2006-01-02 15:04:05"),
+		}
+
+		err = s.Storage.Sensor.InsertSensorData(stream.Context(), dbData)
+		if err != nil {
+			log.Printf("ERROR: Failed to insert sensor data: %v", err)
+		} else {
+			log.Printf("Successfully inserted: Type=%s, Value=%.2f, ID1=%s",
+				dbData.SensorType, dbData.SensorValue, dbData.ID1)
+		}
 		dataCount++
 	}
 }

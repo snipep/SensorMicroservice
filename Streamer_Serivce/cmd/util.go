@@ -10,19 +10,29 @@ import (
 
 // CreateSensorPayload generates a sample SensorData message.
 func CreateSensorPayload(i int) *sensor.SensorDataPayload {
-	sensorType := []string{"Temperature", "Humidity", "Pressure", "Light"}
-
-	id1Runes := make([]rune, 4)
-	for i := range id1Runes {
-		id1Runes[i] = rune('A' + rand.IntN(26)) 
+	sensorMap := map[string]string{
+		"A": "Temperature",
+		"B": "Humidity",
+		"C": "Pressure",
+		"D": "Light",
 	}
-	// Create a new SensorData message.
+
+	// Extract keys into a slice so we can pick randomly
+	keys := make([]string, 0, len(sensorMap))
+	for k := range sensorMap {
+		keys = append(keys, k)
+	}
+
+	// Pick a random key
+	randKey := keys[rand.IntN(len(keys))]
+
+	// Create a new SensorData message
 	data := &sensor.SensorDataPayload{
 		SensorValue: rand.Float32() * 100.0,
-		SensorType:  sensorType[rand.IntN(len(sensorType))], 
-		Id1:         string(id1Runes),
+		SensorType:  sensorMap[randKey], // value
+		Id1:         randKey,            // key
 		Id2:         int32(1000 + i),
-		Timestamp: timestamppb.New(time.Now()),
+		Timestamp:   timestamppb.New(time.Now()),
 	}
 	return data
 }
