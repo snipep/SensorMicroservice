@@ -1,14 +1,17 @@
 package main
 
 import (
+	// "context"
 	"log"
 	"os"
-
+	"time"
+	"go.uber.org/zap"
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	err := godotenv.Load("../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
@@ -18,19 +21,37 @@ func main() {
 		serverAddr = "localhost:50051" // Default address if not set in .env
 	}
 
+	httpPort := os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		httpPort = ":8080"
+	}
+
+	//---- Dependency Setup ----
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
+
 	// Establish a connection and get a new client.
-	conn, client, err := NewClient(serverAddr)
+	conn, gclient, err := NewClient(serverAddr)
 	if err != nil {
-		log.Fatalf("Failed to connect to gRPC server: %v", err)
+		logger.Fatalf("Failed to connect to gRPC server: %v", err)
 	}
 	defer conn.Close()
-
-	log.Println("Successfully connected to gRPC server.")
-
-	// Call the function to send a stream of sensor data.
-	if err := SendDataStream(client); err != nil {
-		log.Fatalf("Failed to send data stream: %v", err)
+	logger.Info("Successfully connected to gRPC server.")
+	
+	
+	
+	// ---- Application State ----
+	app := NewApplication(gclient, time.NewTicker(5*time.Second), logger)
+	router := echo.New()
+	// Register routes for the Application.
+	app.RegiterRoutes(router)
+	// Serve the HTTP server.
+	
+	// Start the data streaming in a separate goroutine.
+	go app.SendDataStream()
+	
+	if err := router.Start(httpPort); err != nil {
+		logger.Fatalf("Failed to start HTTP server: %v", err)
 	}
-
-	log.Println("Client execution finished.")
 }

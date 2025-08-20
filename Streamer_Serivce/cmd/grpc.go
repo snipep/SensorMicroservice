@@ -24,34 +24,38 @@ func NewClient(addr string) (*grpc.ClientConn, sensor.SensorServiceClient, error
 	return conn, client, nil
 }
 
-// SendDataStream handles the client-side streaming logic.
-func SendDataStream(client sensor.SensorServiceClient) error {
-	log.Println("Starting to send sensor data stream...")
+func (app *Application) SendDataStream() {
+	log.Println("Starting background data streaming goroutine...")
+	var stream sensor.SensorService_SendSensorDataClient
+	var err error
+	i := 0 // Counter for data points
 
-	stream, err := client.SendSensorData(context.Background())
-	if err != nil {
-		return fmt.Errorf("could not open stream: %w", err)
-	}
+	// outer loop handles reconnecting if the stream breaks.
+	for {
+		// If the stream is nil,Create a new one.
+		if stream == nil {
+			stream, err = app.SensorClient.SendSensorData(context.Background())
+			if err != nil {
+				app.logger.Errorf("Could not open stream, will retry in 5 seconds: %v", err)
+				time.Sleep(5 * time.Second)
+				continue // Reconnect
+			}
+			log.Println("Successfully established new gRPC stream.")
+		}
 
-	for i := 0; i < 10; i++ {
-		// Create a new sensor data payload 
+		<-app.ticker.C
+		
 		payload := CreateSensorPayload(i)
 		req := &sensor.SensorData{Data: payload}
 
+		// Send the data. If it fails, we set the stream to nil to force a reconnect on the next loop iteration.
 		if err := stream.Send(req); err != nil {
-			return fmt.Errorf("failed to send data point %d: %w", i, err)
+			app.logger.Errorf("Failed to send data point, will attempt to reconnect: %v", err)
+			stream = nil // Mark stream as broken
+			continue
 		}
+
 		log.Printf("Sent data point #%d with value: %.2f", i, payload.SensorValue)
-
-		time.Sleep(500 * time.Millisecond)
+		i++
 	}
-
-	// After sending all the data, close the stream and receive the server's response.
-	res, err := stream.CloseAndRecv()
-	if err != nil {
-		return fmt.Errorf("failed to receive response: %w", err)
-	}
-
-	log.Printf("Server Response: Status=%s, Message='%s'", res.GetStatus(), res.GetMessage())
-	return nil
 }
