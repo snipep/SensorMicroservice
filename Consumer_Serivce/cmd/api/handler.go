@@ -218,3 +218,94 @@ func (app *Application) deleteSensorHistoryByIDs(c echo.Context) error {
 		"rows_affected": rowsAffected,
 	})
 }
+
+
+type editByIDRequest struct {
+	ID1      string  `json:"id1"`
+	ID2      int32   `json:"id2"`
+	NewValue float32 `json:"new_value"`
+}
+
+type editByHistoryRequest struct {
+	StartTime string  `json:"start_time"`
+	EndTime   string  `json:"end_time"`
+	NewValue  float32 `json:"new_value"`
+}
+
+type editByQueryHistoryRequest struct {
+	ID1       string  `json:"id1"`
+	ID2       int32   `json:"id2"`
+	StartTime string  `json:"start_time"`
+	EndTime   string  `json:"end_time"`
+	NewValue  float32 `json:"new_value"`
+}
+
+
+func (app *Application) editSensorDataByID(c echo.Context) error {
+	var req editByIDRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+
+	rowsAffected, err := app.store.Sensor.EditSensorDataByID(req.ID1, req.ID2, req.NewValue)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+
+	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
+		"message":        "Sensor data updated successfully",
+		"rows_affected": rowsAffected,
+	})
+}
+
+func (app *Application) editSensorHistory(c echo.Context) error {
+	var req editByHistoryRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid start_time format: %w", err))
+	}
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid end_time format: %w", err))
+	}
+
+	rowsAffected, err := app.store.Sensor.EditSensorHistory(startTime, endTime, req.NewValue)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+
+	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
+		"message":        "Sensor history updated successfully",
+		"rows_affected": rowsAffected,
+	})
+}
+
+func (app *Application) editSensorHistoryByIDs(c echo.Context) error {
+	var req editByQueryHistoryRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid start_time format: %w", err))
+	}
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid end_time format: %w", err))
+	}
+
+	rowsAffected, err := app.store.Sensor.EditSensorHistoryByIDs(req.ID1, req.ID2, startTime, endTime, req.NewValue)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+
+	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
+		"message":        "Sensor history for specified IDs updated successfully",
+		"rows_affected": rowsAffected,
+	})
+}

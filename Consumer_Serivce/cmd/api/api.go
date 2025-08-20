@@ -33,14 +33,20 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	// --Routes--
 	apiGroup := e.Group("api/v1")
 	sensordata := apiGroup.Group("/sensordata")
+	// --- GET Routes ---
 	sensordata.GET("/query", app.getSensorByIDs)
 	sensordata.GET("/history", app.getSensorHistory)
 	sensordata.GET("/query-history", app.getSensorHistoryByIDs)
+
+	// --- DELETE Routes ---
 	sensordata.DELETE("/query", app.deleteSensorDataByIDs)
-	// d(b): Delete by a time duration
 	sensordata.DELETE("/history", app.deleteSensorHistory)
-	// d(c): Delete by a combination of a single ID pair and a time duration
 	sensordata.DELETE("/query-history", app.deleteSensorHistoryByIDs)
+
+	// --- PUT Routes ---
+	sensordata.PUT("/query", app.editSensorDataByID)
+	sensordata.PUT("/history", app.editSensorHistory)
+	sensordata.PUT("/query-history", app.editSensorHistoryByIDs)
 
 }
 

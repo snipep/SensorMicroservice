@@ -77,7 +77,6 @@ func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32) (*SensorData, error)
 }
 
 
-// --- NEW: Function to get all sensor readings within a time range ---
 func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorData, error) {
 	query := `
         SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
@@ -119,7 +118,6 @@ func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorDa
 	return sensors, nil
 }
 
-// --- NEW: Function to get sensor readings for specific IDs within a time range ---
 func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time) ([]SensorData, error) {
 	query := `
         SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
@@ -201,6 +199,50 @@ func (s *SensorStore) DeleteSensorHistoryByIDs(id1 string, id2 int32, startTime,
 	defer cancel()
 
 	result, err := s.db.ExecContext(ctx, query, id1, id2, startTime, endTime)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+func (s *SensorStore) EditSensorDataByID(id1 string, id2 int32, newValue float32) (int64, error) {
+	query := `UPDATE sensor_readings SET sensor_value = ? WHERE id1 = ? AND id2 = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	result, err := s.db.ExecContext(ctx, query, newValue, id1, id2)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+// e(b): Edit by a time duration
+func (s *SensorStore) EditSensorHistory(startTime, endTime time.Time, newValue float32) (int64, error) {
+	query := `UPDATE sensor_readings SET sensor_value = ? WHERE timestamp BETWEEN ? AND ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	result, err := s.db.ExecContext(ctx, query, newValue, startTime, endTime)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+// e(c): Edit by a combination of a single ID pair and a time duration
+func (s *SensorStore) EditSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time, newValue float32) (int64, error) {
+	query := `UPDATE sensor_readings SET sensor_value = ? WHERE id1 = ? AND id2 = ? AND timestamp BETWEEN ? AND ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	result, err := s.db.ExecContext(ctx, query, newValue, id1, id2, startTime, endTime)
 	if err != nil {
 		return 0, err
 	}
