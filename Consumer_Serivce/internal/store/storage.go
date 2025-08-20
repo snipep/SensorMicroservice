@@ -16,6 +16,9 @@ type Storage struct {
 		GetSensorByIDs(id1 string, id2 int32) (*SensorData, error)
 		GetSensorHistory(startTime, endTime time.Time) ([]SensorData, error)
 		GetSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time) ([]SensorData, error)
+		DeleteSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time) (int64, error)
+		DeleteSensorHistory(startTime, endTime time.Time) (int64, error)
+		DeleteSensorDataByIDs(id1 string, id2 int32) (int64, error)
 	}
 }
 

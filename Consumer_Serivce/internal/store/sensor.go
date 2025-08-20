@@ -162,3 +162,48 @@ func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, en
 
 	return sensors, nil
 }
+
+func (s *SensorStore) DeleteSensorDataByIDs(id1 string, id2 int32) (int64, error) {
+	// The query is a simple DELETE with a WHERE clause for the specific ID pair.
+	query := `DELETE FROM sensor_readings WHERE id1 = ? AND id2 = ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	// Use ExecContext to execute the delete statement with the provided IDs.
+	result, err := s.db.ExecContext(ctx, query, id1, id2)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+
+func (s *SensorStore) DeleteSensorHistory(startTime, endTime time.Time) (int64, error) {
+	query := `DELETE FROM sensor_readings WHERE timestamp BETWEEN ? AND ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	result, err := s.db.ExecContext(ctx, query, startTime, endTime)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+func (s *SensorStore) DeleteSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time) (int64, error) {
+	query := `DELETE FROM sensor_readings WHERE id1 = ? AND id2 = ? AND timestamp BETWEEN ? AND ?`
+
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
+	defer cancel()
+
+	result, err := s.db.ExecContext(ctx, query, id1, id2, startTime, endTime)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}

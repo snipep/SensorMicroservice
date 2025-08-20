@@ -35,7 +35,12 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	sensordata := apiGroup.Group("/sensordata")
 	sensordata.GET("/query", app.getSensorByIDs)
 	sensordata.GET("/history", app.getSensorHistory)
-	sensordata.GET("/query/history", app.getSensorHistoryByIDs)
+	sensordata.GET("/query-history", app.getSensorHistoryByIDs)
+	sensordata.DELETE("/query", app.deleteSensorDataByIDs)
+	// d(b): Delete by a time duration
+	sensordata.DELETE("/history", app.deleteSensorHistory)
+	// d(c): Delete by a combination of a single ID pair and a time duration
+	sensordata.DELETE("/query-history", app.deleteSensorHistoryByIDs)
 
 }
 

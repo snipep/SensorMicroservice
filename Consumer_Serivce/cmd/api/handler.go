@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -9,17 +10,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type getSensorRequest struct {
+type SensorRequest struct {
 	ID1 string `json:"id1"`
 	ID2 int32  `json:"id2"`
 }
+
 func (app *Application) getSensorByIDs(c echo.Context) error {
-	var req getSensorRequest
+	var req SensorRequest
 	if err := readJSON(c, &req); err != nil {
 		app.logger.Errorw("failed to read or parse JSON", "error", err)
 		return app.badRequestResponse(c, err)
 	}
-
 
 	sensor, err := app.store.Sensor.GetSensorByIDs(req.ID1, req.ID2)
 	if err != nil {
@@ -42,9 +43,8 @@ func (app *Application) getSensorByIDs(c echo.Context) error {
 	return nil
 }
 
-
 // --- NEW: Define a struct for the history request payload ---
-type getSensorHistoryRequest struct {
+type SensorHistoryRequest struct {
 	// Using RFC3339 format for timestamps, e.g., "2020-05-04T00:00:00Z"
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
@@ -52,7 +52,7 @@ type getSensorHistoryRequest struct {
 
 // --- NEW: Handler for fetching data by time duration ---
 func (app *Application) getSensorHistory(c echo.Context) error {
-	var req getSensorHistoryRequest
+	var req SensorHistoryRequest
 	if err := readJSON(c, &req); err != nil {
 		app.logger.Errorw("failed to read or parse JSON for history request", "error", err)
 		return app.badRequestResponse(c, err)
@@ -95,22 +95,17 @@ func (app *Application) getSensorHistory(c echo.Context) error {
 	return nil
 }
 
-
 // --- NEW: Define a struct for the combined history request payload ---
-type getSensorHistoryByIDsRequest struct {
+type SensorHistoryByIDsRequest struct {
 	ID1       string `json:"id1"`
 	ID2       int32  `json:"id2"`
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
 }
 
-// Existing handlers...
-// func (app *Application) getSensorByIDs(c echo.Context) error { ... }
-// func (app *Application) getSensorHistory(c echo.Context) error { ... }
-
 // --- NEW: Handler for fetching data by IDs and time duration ---
 func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
-	var req getSensorHistoryByIDsRequest
+	var req SensorHistoryByIDsRequest
 	if err := readJSON(c, &req); err != nil {
 		app.logger.Errorw("failed to read or parse JSON for combined history request", "error", err)
 		return app.badRequestResponse(c, err)
@@ -146,4 +141,80 @@ func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
 
 	app.logger.Infow("combined sensor history fetched successfully", "id1", req.ID1, "id2", req.ID2)
 	return nil
+}
+
+// d(a): Delete by a list of specific ID combinations
+func (app *Application) deleteSensorDataByIDs(c echo.Context) error {
+	var req SensorRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+
+	if req.ID2 < 0 || req.ID1 == "" {
+		return app.badRequestResponse(c, fmt.Errorf("the 'ids' array cannot be empty"))
+	}
+
+	rowsAffected, err := app.store.Sensor.DeleteSensorDataByIDs(req.ID1, req.ID2)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+
+	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
+		"message":        "Sensor data deleted successfully",
+		"rows_affected": rowsAffected,
+	})
+}
+
+// d(b): Delete by a time duration
+func (app *Application) deleteSensorHistory(c echo.Context) error {
+	var req SensorHistoryRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid start_time format: %w", err))
+	}
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid end_time format: %w", err))
+	}
+
+	rowsAffected, err := app.store.Sensor.DeleteSensorHistory(startTime, endTime)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+
+	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
+		"message":        "Sensor history deleted successfully",
+		"rows_affected": rowsAffected,
+	})
+}
+
+// d(c): Delete by a combination of a single ID pair and a time duration
+func (app *Application) deleteSensorHistoryByIDs(c echo.Context) error {
+	var req SensorHistoryByIDsRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid start_time format: %w", err))
+	}
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid end_time format: %w", err))
+	}
+
+	rowsAffected, err := app.store.Sensor.DeleteSensorHistoryByIDs(req.ID1, req.ID2, startTime, endTime)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+
+	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
+		"message":        "Sensor history for specified IDs deleted successfully",
+		"rows_affected": rowsAffected,
+	})
 }
