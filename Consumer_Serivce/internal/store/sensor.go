@@ -49,13 +49,15 @@ func (s SensorStore) InsertSensorData(ctx context.Context, data SensorData) erro
 }
 
 
-func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32) (*SensorData, error) {
+func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32, limit, offset int) (*SensorData, error) {
 	// --- FIX: Use a JOIN to get sensor_type from the 'sensors' table ---
 	query := `
         SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
         FROM sensor_readings r
         INNER JOIN sensors s ON r.id1 = s.id1
-        WHERE r.id1 = ? AND r.id2 = ?`
+        WHERE r.id1 = ? AND r.id2 = ?
+        ORDER BY r.timestamp DESC
+        LIMIT ? OFFSET ?`
 
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()
@@ -77,13 +79,14 @@ func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32) (*SensorData, error)
 }
 
 
-func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorData, error) {
+func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time, limit, offset int) ([]SensorData, error) {
 	query := `
         SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
         FROM sensor_readings r
         INNER JOIN sensors s ON r.id1 = s.id1
         WHERE r.timestamp BETWEEN ? AND ?
-        ORDER BY r.timestamp ASC`
+        ORDER BY r.timestamp ASC
+        LIMIT ? OFFSET ?`
 
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()
@@ -118,7 +121,7 @@ func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time) ([]SensorDa
 	return sensors, nil
 }
 
-func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time) ([]SensorData, error) {
+func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time, limit, offset int) ([]SensorData, error) {
 	query := `
         SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
         FROM sensor_readings r
@@ -126,7 +129,8 @@ func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, en
         WHERE r.id1 = ? 
           AND r.id2 = ? 
           AND r.timestamp BETWEEN ? AND ?
-        ORDER BY r.timestamp ASC`
+        ORDER BY r.timestamp ASC
+        LIMIT ? OFFSET ?`
 
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()

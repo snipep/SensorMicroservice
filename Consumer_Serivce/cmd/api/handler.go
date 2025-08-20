@@ -11,22 +11,38 @@ import (
 )
 
 type SensorRequest struct {
-	ID1 string `json:"id1"`
-	ID2 int32  `json:"id2"`
+	ID1    string `json:"id1"`
+	ID2    int32  `json:"id2"`
+	Limit  int    `json:"limit"`
+	Offset int    `json:"offset"`
 }
 
+type SensorHistoryRequest struct {
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Limit     int    `json:"limit"`
+	Offset    int    `json:"offset"`
+}
+
+type SensorHistoryByIDsRequest struct {
+	ID1       string `json:"id1"`
+	ID2       int32  `json:"id2"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Limit     int    `json:"limit"`
+	Offset    int    `json:"offset"`
+}
 func (app *Application) getSensorByIDs(c echo.Context) error {
 	var req SensorRequest
 	if err := readJSON(c, &req); err != nil {
 		app.logger.Errorw("failed to read or parse JSON", "error", err)
 		return app.badRequestResponse(c, err)
 	}
+	applyDefaultPagination(&req.Limit, &req.Offset)
 
-	sensor, err := app.store.Sensor.GetSensorByIDs(req.ID1, req.ID2)
+	sensor, err := app.store.Sensor.GetSensorByIDs(req.ID1, req.ID2, req.Limit, req.Offset)
 	if err != nil {
-		// Check for the specific "not found" error
 		if err == sql.ErrNoRows {
-			// Use "return" to stop execution here
 			return app.notFoundResponse(c, err)
 		}
 		// For all other errors, it's an internal server error
@@ -43,20 +59,13 @@ func (app *Application) getSensorByIDs(c echo.Context) error {
 	return nil
 }
 
-// --- NEW: Define a struct for the history request payload ---
-type SensorHistoryRequest struct {
-	// Using RFC3339 format for timestamps, e.g., "2020-05-04T00:00:00Z"
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
-}
-
-// --- NEW: Handler for fetching data by time duration ---
 func (app *Application) getSensorHistory(c echo.Context) error {
 	var req SensorHistoryRequest
 	if err := readJSON(c, &req); err != nil {
 		app.logger.Errorw("failed to read or parse JSON for history request", "error", err)
 		return app.badRequestResponse(c, err)
 	}
+	applyDefaultPagination(&req.Limit, &req.Offset)
 
 	// Parse the start and end time strings into time.Time objects
 	startTime, err := time.Parse(time.RFC3339, req.StartTime)
@@ -72,7 +81,7 @@ func (app *Application) getSensorHistory(c echo.Context) error {
 	}
 
 	// Call the new store method
-	sensors, err := app.store.Sensor.GetSensorHistory(startTime, endTime)
+	sensors, err := app.store.Sensor.GetSensorHistory(startTime, endTime, req.Limit, req.Offset)
 	log.Println("sensors:", sensors)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -95,21 +104,13 @@ func (app *Application) getSensorHistory(c echo.Context) error {
 	return nil
 }
 
-// --- NEW: Define a struct for the combined history request payload ---
-type SensorHistoryByIDsRequest struct {
-	ID1       string `json:"id1"`
-	ID2       int32  `json:"id2"`
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
-}
-
-// --- NEW: Handler for fetching data by IDs and time duration ---
 func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
 	var req SensorHistoryByIDsRequest
 	if err := readJSON(c, &req); err != nil {
 		app.logger.Errorw("failed to read or parse JSON for combined history request", "error", err)
 		return app.badRequestResponse(c, err)
 	}
+	applyDefaultPagination(&req.Limit, &req.Offset)
 
 	// Parse the start and end time strings
 	startTime, err := time.Parse(time.RFC3339, req.StartTime)
@@ -124,8 +125,7 @@ func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
 		return app.badRequestResponse(c, err)
 	}
 
-	// Call the new store method with all parameters
-	sensors, err := app.store.Sensor.GetSensorHistoryByIDs(req.ID1, req.ID2, startTime, endTime)
+	sensors, err := app.store.Sensor.GetSensorHistoryByIDs(req.ID1, req.ID2, startTime, endTime, req.Limit, req.Offset)
 	log.Println("sensors:", sensors)
 	if err != nil {
 		app.logger.Errorw("failed to fetch combined sensor history", "id1", req.ID1, "id2", req.ID2, "error", err)
@@ -143,7 +143,6 @@ func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
 	return nil
 }
 
-// d(a): Delete by a list of specific ID combinations
 func (app *Application) deleteSensorDataByIDs(c echo.Context) error {
 	var req SensorRequest
 	if err := readJSON(c, &req); err != nil {
@@ -165,7 +164,6 @@ func (app *Application) deleteSensorDataByIDs(c echo.Context) error {
 	})
 }
 
-// d(b): Delete by a time duration
 func (app *Application) deleteSensorHistory(c echo.Context) error {
 	var req SensorHistoryRequest
 	if err := readJSON(c, &req); err != nil {
@@ -192,7 +190,6 @@ func (app *Application) deleteSensorHistory(c echo.Context) error {
 	})
 }
 
-// d(c): Delete by a combination of a single ID pair and a time duration
 func (app *Application) deleteSensorHistoryByIDs(c echo.Context) error {
 	var req SensorHistoryByIDsRequest
 	if err := readJSON(c, &req); err != nil {
@@ -308,4 +305,12 @@ func (app *Application) editSensorHistoryByIDs(c echo.Context) error {
 		"message":        "Sensor history for specified IDs updated successfully",
 		"rows_affected": rowsAffected,
 	})
+}
+func applyDefaultPagination(limit, offset *int) {
+	if *limit <= 0 {
+		*limit = 10 // Default page size
+	}
+	if *offset < 0 {
+		*offset = 0 // Default offset
+	}
 }
