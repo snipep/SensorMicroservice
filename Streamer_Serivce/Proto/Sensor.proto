@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package sensor;
+
+option go_package = "./;sensor";
+
+import "google/protobuf/timestamp.proto";
+
+message SensorDataPayload {
+    float sensor_value = 1;
+    string sensor_type = 2;
+    string id1 = 3;
+    int32 id2 = 4;
+    google.protobuf.Timestamp timestamp = 5;
+}
+
+message SensorData {
+    SensorDataPayload data = 1;
+}
+
+message SensorDataResponse {
+    string status = 1;
+    string message = 2;
+}
+
+service SensorService {
+    rpc SendSensorData(stream SensorData) returns (SensorDataResponse);
+}
