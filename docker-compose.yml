@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: sensor-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sensordata
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  consumer:
+    build:
+      context: ./Consumer_Serivce
+      dockerfile: Dockerfile
+    container_name: consumer
+    environment:
+      ADDR: ":8080"
+      GRPC_PORT: ":50051"
+      JWT_SECRET: "change-me"
+      DB_ADDR: "user:password@tcp(db:3306)/sensordata?charset=utf8mb4&parseTime=true&loc=UTC"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+
+  streamer:
+    build:
+      context: ./Streamer_Serivce
+      dockerfile: Dockerfile
+    container_name: streamer
+    environment:
+      MICROSERVICE_B_ADDR: "consumer:50051"
+      HTTP_PORT: ":8081"
+    # Streamer service loads .env inside the container; mount one if needed
+    volumes:
+      - ./Streamer_Serivce/.env:/app/.env:ro
+    depends_on:
+      - consumer
+    ports:
+      - "8081:8081"
+
+volumes:
+  db-data:

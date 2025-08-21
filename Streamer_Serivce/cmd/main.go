@@ -1,8 +1,7 @@
 package main
 
 import (
-	// "context"
-	"log"
+
 	"os"
 	"time"
 	"go.uber.org/zap"
@@ -11,9 +10,12 @@ import (
 )
 
 func main() {
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		logger.Errorf("Error loading .env file: %v", err)
 	}
 
 	serverAddr := os.Getenv("MICROSERVICE_B_ADDR")
@@ -25,11 +27,6 @@ func main() {
 	if httpPort == "" {
 		httpPort = ":8080"
 	}
-
-	//---- Dependency Setup ----
-	logger := zap.Must(zap.NewProduction()).Sugar()
-	defer logger.Sync()
-
 
 	// Establish a connection and get a new client.
 	conn, gclient, err := NewClient(serverAddr)

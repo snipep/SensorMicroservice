@@ -2,7 +2,7 @@ include .env
 export
 
 # Define variables for directories and the output binary name for easy management.
-BINARY_NAME=streamer-service
+BINARY_NAME=consumer-service
 APP_DIR=./cmd/api
 BUILD_DIR=./bin
 PROTO_DIR=./Proto
@@ -21,7 +21,7 @@ build:
 
 # Depends on 'build' to ensure the binary is compiled, then runs it.
 run: build
-	@echo "Running the Streamer Service..."
+	@echo "Running the Consumer Service..."
 	@$(BUILD_DIR)/$(BINARY_NAME)
 
 # run: build
@@ -72,3 +72,18 @@ help:
 	@echo "  deps         Install required Go tools for generation."
 	@echo "  clean        Remove all generated and built files."
 	@echo "  help         Show this help message."
+
+# --- Docker targets ---
+.PHONY: docker-build docker-run
+
+docker-build:
+	@echo "Building consumer Docker image..."
+	@docker build -t consumer-service:latest -f Dockerfile .
+
+docker-run:
+	@echo "Running consumer Docker container..."
+	@docker run --rm -p 8080:8080 -p 50051:50051 \
+	  -e ADDR=:8080 -e GRPC_PORT=:50051 \
+	  -e JWT_SECRET=change-me \
+	  -e DB_ADDR='user:password@tcp(host.docker.internal:3306)/sensordata?charset=utf8mb4&parseTime=true&loc=UTC' \
+	  --name consumer consumer-service:latest

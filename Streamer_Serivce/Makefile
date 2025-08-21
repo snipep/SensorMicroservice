@@ -48,3 +48,17 @@ help:
 	@echo "  deps         Install required Go tools for generation."
 	@echo "  clean        Remove all generated and built files."
 	@echo "  help         Show this help message."
+
+# --- Docker targets ---
+.PHONY: docker-build docker-run
+
+docker-build:
+	@echo "Building streamer Docker image..."
+	@docker build -t streamer-service:latest -f Dockerfile .
+
+docker-run:
+	@echo "Running streamer Docker container..."
+	@docker run --rm -p 8081:8080 \
+	  -e MICROSERVICE_B_ADDR=host.docker.internal:50051 \
+	  -e HTTP_PORT=:8080 \
+	  --name streamer streamer-service:latest

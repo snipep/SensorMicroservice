@@ -11,6 +11,8 @@ import (
 	"github.com/snipep/Assessment/Consumer-Service/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+
+	migratepkg "github.com/snipep/Assessment/Consumer-Service/cmd/migrate"
 )
 
 func main() {
@@ -41,6 +43,11 @@ func main() {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	// Run embedded migrations
+	if err := migratepkg.Run(db); err != nil {
+		logger.Fatalf("Failed to run migrations: %v", err)
+	}
 
 	logger.Info("database connection established")
 	store := store.NewStorage(db)
