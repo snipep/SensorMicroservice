@@ -1,4 +1,4 @@
-## Assessment – Sensor Streaming System
+## Sensor Streaming System
 
 Two microservices with MySQL:
 
