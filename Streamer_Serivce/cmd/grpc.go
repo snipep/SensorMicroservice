@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// NewClient creates and returns a new gRPC client and its connection.
 func NewClient(addr string) (*grpc.ClientConn, sensor.SensorServiceClient, error) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -19,7 +18,6 @@ func NewClient(addr string) (*grpc.ClientConn, sensor.SensorServiceClient, error
 		return nil, nil, fmt.Errorf("did not connect: %w", err)
 	}
 
-	// Create a new client stub.
 	client := sensor.NewSensorServiceClient(conn)
 	return conn, client, nil
 }
@@ -28,9 +26,8 @@ func (app *Application) SendDataStream() {
 	log.Println("Starting background data streaming goroutine...")
 	var stream sensor.SensorService_SendSensorDataClient
 	var err error
-	i := 0 // Counter for data points
+	i := 0 
 
-	// outer loop handles reconnecting if the stream breaks.
 	for {
 		// If the stream is nil,Create a new one.
 		if stream == nil {

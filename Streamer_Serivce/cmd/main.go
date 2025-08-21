@@ -20,7 +20,7 @@ func main() {
 
 	serverAddr := os.Getenv("MICROSERVICE_B_ADDR")
 	if serverAddr == "" {
-		serverAddr = "localhost:50051" // Default address if not set in .env
+		serverAddr = "localhost:50051" 
 	}
 
 	httpPort := os.Getenv("HTTP_PORT")
@@ -48,9 +48,7 @@ func main() {
 	// ---- Application State ----
 	app := NewApplication(gclient, time.NewTicker(5*time.Second), logger, streamerID1, streamerType)
 	router := echo.New()
-	// Register routes for the Application.
 	app.RegiterRoutes(router)
-	// Serve the HTTP server.
 
 	// Start the data streaming in a separate goroutine.
 	go app.SendDataStream()

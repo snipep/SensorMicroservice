@@ -34,7 +34,6 @@ type FrequencyUpdateRequest struct {
 	FrequencySeconds int `json:"frequency_seconds"`
 }
 
-// UpdateFrequencyHandler handles the frequency update request.
 func (app *Application) UpdateFrequencyHandler(w http.ResponseWriter, r *http.Request) {
 	var req FrequencyUpdateRequest
 	if err := readJSON(w, r, &req); err != nil {
