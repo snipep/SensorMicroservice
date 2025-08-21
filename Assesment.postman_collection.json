@@ -1,0 +1,423 @@
+{
+	"info": {
+		"_postman_id": "d5472df5-f5a6-47de-ae08-4a6b8f626a2c",
+		"name": "Assesment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "37021016"
+	},
+	"item": [
+		{
+			"name": "MicroserviceA",
+			"item": [
+				{
+					"name": "TempStreamer",
+					"item": [
+						{
+							"name": "UpdateFrequency",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"frequency_seconds\": 2\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8081/api/v1/frequency"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "HumStreamer",
+					"item": [
+						{
+							"name": "UpdateFrequency",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"frequency_seconds\": 2\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8081/api/v1/frequency"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PressStreamer",
+					"item": [
+						{
+							"name": "UpdateFrequency",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"frequency_seconds\": 2\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8083/api/v1/frequency"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "MicroserviceB",
+			"item": [
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "SignUp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Alice Doe\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"P@ssw0rd123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/signup"
+							},
+							"response": []
+						},
+						{
+							"name": "SignIn",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"P@ssw0rd123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/signin"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "SensorData",
+					"item": [
+						{
+							"name": "DataByIDs",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id1\": \"A\",\n    \"id2\": 1003\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/api/v1/sensordata/query?limit=10&offset=0",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"sensordata",
+										"query"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "offset",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ByTime&IDs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id1\": \"B\",\n    \"id2\": 1025,\n    \"start_time\": \"2025-08-21T11:15:00Z\",\n    \"end_time\": \"2025-08-21T11:16:10Z\",\n    \"new_value\":81.51\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/sensordata/query-history"
+							},
+							"response": []
+						},
+						{
+							"name": "DataByTime",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"start_time\": \"2025-08-21T11:15:00Z\",\n    \"end_time\": \"2025-08-21T11:16:10Z\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/api/v1/sensordata/history?limit=10&offset=0",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"sensordata",
+										"history"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "offset",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ByTime",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"start_time\": \"2025-08-20T19:32:10Z\",\n    \"end_time\": \"2025-08-20T19:32:15Z\",\n    \"new_value\":55.0987\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/sensordata/history"
+							},
+							"response": []
+						},
+						{
+							"name": "QueryByTimestamp",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id1\": \"B\",\n    \"id2\": 1025,\n    \"start_time\": \"2025-08-21T11:15:00Z\",\n    \"end_time\": \"2025-08-21T11:16:10Z\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/api/v1/sensordata/query-history?limit=10&offset=0",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"v1",
+										"sensordata",
+										"query-history"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "offset",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ByIDs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id1\": \"B\",\n    \"id2\": 1025,\n    \"new_value\":99.2501\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/sensordata/query"
+							},
+							"response": []
+						},
+						{
+							"name": "ByIDs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id1\": \"B\",\n    \"id2\": 1025\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/sensordata/query"
+							},
+							"response": []
+						},
+						{
+							"name": "ByTime",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"start_time\": \"2025-08-20T19:32:15Z\",\n    \"end_time\": \"2025-08-20T19:32:25Z\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/sensordata/history"
+							},
+							"response": []
+						},
+						{
+							"name": "ByTime&IDs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiZXhwIjoxNzU1ODYxMjMzLCJpYXQiOjE3NTU3NzQ4MzMsImlzcyI6ImNvbnN1bWVyLXNlcnZpY2UiLCJzdWIiOjF9.diB3ADqbmYODBG3h5JfFLndN6Jye1bZ_BFq_PWDvvcE"
+									}
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id1\": \"A\",\n    \"id2\": 1015,\n    \"start_time\": \"2025-08-20T19:32:00Z\",\n    \"end_time\": \"2025-08-20T19:32:10Z\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/api/v1/sensordata/query-history"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

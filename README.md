@@ -5,7 +5,6 @@ Two microservices with MySQL:
 - Consumer Service (REST + gRPC): receives streamed sensor data, persists to MySQL, exposes query/edit APIs, and provides user auth with JWT. Uses a worker-pool to insert streamed data.
 - Streamer Service (HTTP control + gRPC client): generates sensor data and streams it to Consumer. Multiple streamer instances run concurrently, each with a fixed sensor type/ID.
 
-
 ### Repository layout
 
 - `Consumer_Serivce/` – Consumer service (HTTP, gRPC, DB access, auth, workers)
