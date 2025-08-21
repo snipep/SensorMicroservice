@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -13,6 +14,9 @@ type Application struct {
 	config Config
 	store  *store.Storage
 	logger *zap.SugaredLogger
+	// worker pool
+	ingestCh    chan store.SensorData
+	workerCount int
 }
 
 type dbConfig struct {
@@ -33,6 +37,8 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	// --- Auth Routes ---
 	apiGroup.POST("/signup", app.signup)
 	apiGroup.POST("/signin", app.signin)
+	
+	// Protected with JWT in main.go middleware
 	sensordata := apiGroup.Group("/sensordata")
 	// --- GET Routes ---
 	sensordata.GET("/query", app.getSensorByIDs)
@@ -45,7 +51,6 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	sensordata.DELETE("/query-history", app.deleteSensorHistoryByIDs)
 
 	// --- PUT Routes ---
-	// Protected with JWT in main.go middleware
 	sensordata.PUT("/query", app.editSensorDataByID)
 	sensordata.PUT("/history", app.editSensorHistory)
 	sensordata.PUT("/query-history", app.editSensorHistoryByIDs)
@@ -64,4 +69,31 @@ func (app *Application) run(echo *echo.Echo) error {
 
 	app.logger.Infow("Server has started", "addr", app.config.addr)
 	return srv.ListenAndServe()
+}
+
+// InitIngest initializes the buffered channel and starts worker goroutines.
+func (app *Application) InitIngest(workers int, bufferSize int) {
+	if workers <= 0 {
+		workers = 4
+	}
+	if bufferSize <= 0 {
+		bufferSize = 1024
+	}
+	app.workerCount = workers
+	app.ingestCh = make(chan store.SensorData, bufferSize)
+	for i := 0; i < app.workerCount; i++ {
+		go app.ingestWorker(i)
+	}
+	app.logger.Infof("Ingest worker pool started with %d workers (buffer=%d)", app.workerCount, bufferSize)
+}
+
+func (app *Application) ingestWorker(id int) {
+	for data := range app.ingestCh {
+		// Use a short-lived context per insert
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		if err := app.store.Sensor.InsertSensorData(ctx, data); err != nil {
+			app.logger.Errorf("worker %d: failed to insert sensor data: %v", id, err)
+		}
+		cancel()
+	}
 }

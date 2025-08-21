@@ -58,6 +58,11 @@ func main() {
 		logger: logger,
 	}
 
+	// start worker pool for incoming data
+	workers := env.GetInt("INGEST_WORKERS", 4)
+	buffer := env.GetInt("INGEST_BUFFER", 1024)
+	app.InitIngest(workers, buffer)
+
 	// ---- gRPC Server Setup ----
 	go startGRPCServer(&app)
 

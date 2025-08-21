@@ -52,22 +52,17 @@ func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer
 		} else {
 			timestamp = payload.GetTimestamp().AsTime()
 		}
-		
+
 		dbData := store.SensorData{
 			SensorType:  payload.GetSensorType(),
 			SensorValue: payload.GetSensorValue(),
 			ID1:         payload.GetId1(),
 			ID2:         payload.GetId2(),
-			// Timestamp:   timestamp.Format("2006-01-02 15:04:05"),
-			Timestamp: timestamp,
+			Timestamp:   timestamp,
 		}
-		err = s.Application.store.Sensor.InsertSensorData(stream.Context(), dbData)
-		if err != nil {
-			log.Printf("ERROR: Failed to insert sensor data: %v", err)
-		} else {
-			log.Printf("Successfully inserted: Type=%s, Value=%.2f, ID1=%s",
-				dbData.SensorType, dbData.SensorValue, dbData.ID1)
-		}
+		// Send to ingest channel (unbuffered). This will block until a worker picks it up.
+		s.Application.ingestCh <- dbData
+		log.Printf("Queued for insert: Type=%s, Value=%.2f, ID1=%s", dbData.SensorType, dbData.SensorValue, dbData.ID1)
 		dataCount++
 	}
 }
