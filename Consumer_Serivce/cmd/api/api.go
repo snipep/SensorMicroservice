@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+	_ "github.com/snipep/Assessment/Consumer-Service/docs" 
+	"github.com/swaggo/echo-swagger"
 
 	"github.com/labstack/echo/v4"
 	"github.com/snipep/Assessment/Consumer-Service/internal/store"
@@ -32,6 +34,9 @@ type Config struct {
 }
 
 func (app *Application) RegiterRoutes(e *echo.Echo) {
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	// --Routes--
 	apiGroup := e.Group("api/v1")
 	// --- Auth Routes ---

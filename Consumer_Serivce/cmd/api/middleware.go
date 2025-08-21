@@ -2,12 +2,12 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterMiddlewares attaches global middlewares, including JWT auth for all routes
-// except the public auth endpoints.
 func RegisterMiddlewares(e *echo.Echo) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -19,7 +19,7 @@ func RegisterMiddlewares(e *echo.Echo) {
 		return func(c echo.Context) error {
 			path := c.Request().URL.Path
 			// Allow public auth endpoints
-			if path == "/api/v1/signup" || path == "/api/v1/signin" {
+			if path == "/api/v1/signup" || path == "/api/v1/signin" || strings.HasPrefix(path, "/swagger"){
 				return next(c)
 			}
 

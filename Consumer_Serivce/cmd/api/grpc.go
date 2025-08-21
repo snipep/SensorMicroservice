@@ -27,19 +27,15 @@ func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer
 
 	for {
 		// Recv() blocks until a message is received or the stream is closed.
-		// The received message type is now *sensor.SensorData
 		req, err := stream.Recv()
 
-		// If the stream is closed by the client, io.EOF is returned.
 		if err == io.EOF {
 			log.Printf("Finished receiving data. Total messages: %d", dataCount)
-			// Send a final response back to the client and close the connection.
 			return stream.SendAndClose(&sensor.SensorDataResponse{
 				Status:  "Success",
 				Message: fmt.Sprintf("Successfully processed %d data points.", dataCount),
 			})
 		}
-		// Handle any other errors during reception.
 		if err != nil {
 			log.Printf("Error while receiving stream: %v", err)
 			return err
@@ -60,6 +56,7 @@ func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer
 			ID2:         payload.GetId2(),
 			Timestamp:   timestamp,
 		}
+		
 		// Send to ingest channel (unbuffered). This will block until a worker picks it up.
 		s.Application.ingestCh <- dbData
 		log.Printf("Queued for insert: Type=%s, Value=%.2f, ID1=%s", dbData.SensorType, dbData.SensorValue, dbData.ID1)

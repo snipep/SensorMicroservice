@@ -50,7 +50,6 @@ func (s SensorStore) InsertSensorData(ctx context.Context, data SensorData) erro
 
 
 func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32, limit, offset int) (*SensorData, error) {
-	// --- FIX: Use a JOIN to get sensor_type from the 'sensors' table ---
 	query := `
         SELECT r.id1, r.id2, r.sensor_value, r.timestamp, s.sensor_type
         FROM sensor_readings r
@@ -163,7 +162,6 @@ func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, en
 }
 
 func (s *SensorStore) DeleteSensorDataByIDs(id1 string, id2 int32) (int64, error) {
-	// The query is a simple DELETE with a WHERE clause for the specific ID pair.
 	query := `DELETE FROM sensor_readings WHERE id1 = ? AND id2 = ?`
 
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
@@ -220,7 +218,6 @@ func (s *SensorStore) EditSensorDataByID(id1 string, id2 int32, newValue float32
 	return result.RowsAffected()
 }
 
-// e(b): Edit by a time duration
 func (s *SensorStore) EditSensorHistory(startTime, endTime time.Time, newValue float32) (int64, error) {
 	query := `UPDATE sensor_readings SET sensor_value = ? WHERE timestamp BETWEEN ? AND ?`
 
@@ -235,7 +232,6 @@ func (s *SensorStore) EditSensorHistory(startTime, endTime time.Time, newValue f
 	return result.RowsAffected()
 }
 
-// e(c): Edit by a combination of a single ID pair and a time duration
 func (s *SensorStore) EditSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time, newValue float32) (int64, error) {
 	query := `UPDATE sensor_readings SET sensor_value = ? WHERE id1 = ? AND id2 = ? AND timestamp BETWEEN ? AND ?`
 

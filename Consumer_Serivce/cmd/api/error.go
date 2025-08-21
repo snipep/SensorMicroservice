@@ -6,6 +6,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type HTTPError struct {
+    Error string `json:"error"`
+}
+
 func (app *Application) internalServerError(c echo.Context, err error) error {
 	app.logger.Errorw("internal error",
 		"method", c.Request().Method,

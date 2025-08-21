@@ -1,0 +1,579 @@
+basePath: /api/v1
+definitions:
+  main.HTTPError:
+    properties:
+      error:
+        type: string
+    type: object
+  main.SensorHistoryByIDsRequest:
+    properties:
+      end_time:
+        type: string
+      id1:
+        type: string
+      id2:
+        type: integer
+      start_time:
+        type: string
+    type: object
+  main.SensorHistoryRequest:
+    properties:
+      end_time:
+        type: string
+      start_time:
+        type: string
+    type: object
+  main.SensorRequest:
+    properties:
+      id1:
+        type: string
+      id2:
+        type: integer
+    type: object
+  main.editByHistoryRequest:
+    properties:
+      end_time:
+        type: string
+      new_value:
+        type: number
+      start_time:
+        type: string
+    type: object
+  main.editByIDRequest:
+    properties:
+      id1:
+        type: string
+      id2:
+        type: integer
+      new_value:
+        type: number
+    type: object
+  main.editByQueryHistoryRequest:
+    properties:
+      end_time:
+        type: string
+      id1:
+        type: string
+      id2:
+        type: integer
+      new_value:
+        type: number
+      start_time:
+        type: string
+    type: object
+  main.rowsAffectedResponse:
+    properties:
+      message:
+        type: string
+      rows_affected:
+        type: integer
+    type: object
+  main.signinRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  main.signinResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  main.signupRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  main.signupResponse:
+    properties:
+      created_at:
+        type: string
+      message:
+        type: string
+    type: object
+  store.SensorData:
+    properties:
+      id1:
+        type: string
+      id2:
+        type: integer
+      sensor_type:
+        type: string
+      sensor_value:
+        type: number
+      timestamp:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is the API for the Consumer Service, which handles sensor data.
+  title: Sensor Data Consumer Service API
+  version: "1.0"
+paths:
+  /sensordata/history:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes sensor history records within the specified time range.
+        Protected by JWT.
+      parameters:
+      - description: Time range for sensor history deletion
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.SensorHistoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.rowsAffectedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Delete sensor history
+      tags:
+      - sensordata - DELETE
+    get:
+      consumes:
+      - application/json
+      description: Responds with sensor history data within the specified time range.
+        Protected by JWT.
+      parameters:
+      - description: Start time in RFC3339 format
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: End time in RFC3339 format
+        in: query
+        name: end_time
+        required: true
+        type: string
+      - default: 10
+        description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/store.SensorData'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Get sensor history
+      tags:
+      - sensordata - GET
+    put:
+      consumes:
+      - application/json
+      description: Updates sensor history records within a specified time range. Protected
+        by JWT.
+      parameters:
+      - description: Time range and new value for sensor history
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.editByHistoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.rowsAffectedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Edit sensor history
+      tags:
+      - sensordata - PUT
+  /sensordata/query:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes sensor data records matching the provided ID1 and ID2.
+        Protected by JWT.
+      parameters:
+      - description: Sensor IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.SensorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.rowsAffectedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Delete sensor data by IDs
+      tags:
+      - sensordata - DELETE
+    get:
+      consumes:
+      - application/json
+      description: Responds with sensor data for the given IDs. Protected by JWT.
+      parameters:
+      - description: Sensor ID 1
+        in: query
+        name: id1
+        type: string
+      - description: Sensor ID 2
+        format: int32
+        in: query
+        name: id2
+        type: integer
+      - default: 10
+        description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.SensorData'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Get sensor data by IDs
+      tags:
+      - sensordata - GET
+    put:
+      consumes:
+      - application/json
+      description: Updates the value of a specific sensor data record. Protected by
+        JWT.
+      parameters:
+      - description: Sensor ID and new value
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.editByIDRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.rowsAffectedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Edit sensor data by ID
+      tags:
+      - sensordata - PUT
+  /sensordata/query-history:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes sensor history records for the specified IDs within a time
+        range. Protected by JWT.
+      parameters:
+      - description: Sensor IDs and time range for deletion
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.SensorHistoryByIDsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.rowsAffectedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Delete sensor history by IDs
+      tags:
+      - sensordata - DELETE
+    get:
+      consumes:
+      - application/json
+      description: Responds with sensor history data for the specified IDs within
+        a time range. Protected by JWT.
+      parameters:
+      - description: Sensor ID 1
+        in: query
+        name: id1
+        required: true
+        type: string
+      - description: Sensor ID 2
+        format: int32
+        in: query
+        name: id2
+        required: true
+        type: integer
+      - description: Start time in RFC3339 format
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: End time in RFC3339 format
+        in: query
+        name: end_time
+        required: true
+        type: string
+      - default: 10
+        description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/store.SensorData'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Get sensor history by IDs
+      tags:
+      - sensordata - GET
+    put:
+      consumes:
+      - application/json
+      description: Updates sensor history records for specified IDs within a time
+        range. Protected by JWT.
+      parameters:
+      - description: Sensor IDs and time range for update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.editByQueryHistoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.rowsAffectedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      security:
+      - Bearer: []
+      summary: Edit sensor history by IDs
+      tags:
+      - sensordata - PUT
+  /signin:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: User Signin Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.signinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.signinResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      summary: User Signin
+      tags:
+      - auth
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: User Signup Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.signupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/main.signupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      summary: User Signup
+      tags:
+      - auth
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and a JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -8,7 +8,7 @@ BUILD_DIR=./bin
 PROTO_DIR=./Proto
 MIGRATION_PATH=./cmd/migrate/migrations
 
-.PHONY: all build run proto migrations migrate-up migrate-down migrate-force deps clean help 
+.PHONY: all build run proto swag migrations migrate-up migrate-down migrate-force deps clean help 
 
 # The default target that runs when you just type "make".
 all: build
@@ -30,6 +30,9 @@ run: build
 # Generates Go code from the .proto file.
 proto:
 	@protoc --proto_path=$(PROTO_DIR) --go_out=$(PROTO_DIR) --go-grpc_out=$(PROTO_DIR) $(PROTO_DIR)/Sensor.proto
+
+swag:
+	@swag init -g cmd/api/main.go
 
 migrations:
 	@echo "Creating migration file: $(name)"

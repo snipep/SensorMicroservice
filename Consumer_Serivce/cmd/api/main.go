@@ -15,6 +15,15 @@ import (
 	migratepkg "github.com/snipep/Assessment/Consumer-Service/cmd/migrate"
 )
 
+// @title Sensor Data Consumer Service API
+// @version 1.0
+// @description This is the API for the Consumer Service, which handles sensor data.
+// @host localhost:8080
+// @BasePath /api/v1
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and a JWT token.
 func main() {
 	// ---- Logger Setup ----
 	logger := zap.Must(zap.NewProduction()).Sugar()
