@@ -24,7 +24,7 @@ type Storage struct {
 		EditSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time, newValue float32) (int64, error)
 	}
 	User interface {
-		CreateUser(ctx context.Context, name, email, passwordHash string) (int64, error)
+		CreateUser(ctx context.Context, name, email, passwordHash string) (int64, error) 
 		GetUserByEmail(ctx context.Context, email string) (*User, error)
 	}
 }

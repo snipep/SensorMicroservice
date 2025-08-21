@@ -312,7 +312,10 @@ func (app *Application) signup(c echo.Context) error {
 	if err != nil {
 		return app.internalServerError(c, err)
 	}
-	return app.jsonResponse(c, http.StatusCreated, map[string]any{"message": "user created"})
+	return app.jsonResponse(c, http.StatusCreated, map[string]any{
+		"message":    "user created",
+		"created_at": time.Now().UTC(),
+	})
 }
 
 func (app *Application) signin(c echo.Context) error {

@@ -13,7 +13,6 @@ type User struct {
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type UserStore struct {
@@ -21,11 +20,12 @@ type UserStore struct {
 }
 
 func (s *UserStore) CreateUser(ctx context.Context, name, email, passwordHash string) (int64, error) {
-	query := `INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)`
+	query := `INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)`
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	res, err := s.db.ExecContext(ctx, query, name, email, passwordHash)
+	createdAt := time.Now().UTC()
+	res, err := s.db.ExecContext(ctx, query, name, email, passwordHash, createdAt)
 	if err != nil {
 		return 0, err
 	}
@@ -33,13 +33,13 @@ func (s *UserStore) CreateUser(ctx context.Context, name, email, passwordHash st
 }
 
 func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	query := `SELECT id, name, email, password_hash, created_at, updated_at FROM users WHERE email = ? LIMIT 1`
+	query := `SELECT id, name, email, password_hash, created_at FROM users WHERE email = ? LIMIT 1`
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
 	row := s.db.QueryRowContext(ctx, query, email)
 	var u User
-	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
