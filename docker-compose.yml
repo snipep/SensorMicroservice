@@ -37,21 +37,53 @@ services:
       - "8080:8080"
       - "50051:50051"
 
-  streamer:
+  temperature_streamer:
     build:
       context: ./Streamer_Serivce
       dockerfile: Dockerfile
-    container_name: streamer
+    container_name: temperature_streamer
     environment:
       MICROSERVICE_B_ADDR: "consumer:50051"
-      HTTP_PORT: ":8081"
+      HTTP_PORT: ":8080"
+      STREAMER_ID1: "A"
+      STREAMER_TYPE: "Temperature"
     # Streamer service loads .env inside the container; mount one if needed
     volumes:
       - ./Streamer_Serivce/.env:/app/.env:ro
     depends_on:
       - consumer
     ports:
-      - "8081:8081"
+      - "8081:8080"
+
+  humidity_streamer:
+    build:
+      context: ./Streamer_Serivce
+      dockerfile: Dockerfile
+    container_name: humidity_streamer
+    environment:
+      MICROSERVICE_B_ADDR: "consumer:50051"
+      HTTP_PORT: ":8080"
+      STREAMER_ID1: "B"
+      STREAMER_TYPE: "Humidity"
+    depends_on:
+      - consumer
+    ports:
+      - "8082:8080"
+
+  pressure_streamer:
+    build:
+      context: ./Streamer_Serivce
+      dockerfile: Dockerfile
+    container_name: pressure_streamer
+    environment:
+      MICROSERVICE_B_ADDR: "consumer:50051"
+      HTTP_PORT: ":8080"
+      STREAMER_ID1: "C"
+      STREAMER_TYPE: "Pressure"
+    depends_on:
+      - consumer
+    ports:
+      - "8083:8080"
 
 volumes:
   db-data:

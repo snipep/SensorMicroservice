@@ -1,12 +1,12 @@
 package main
 
 import (
-
 	"os"
 	"time"
-	"go.uber.org/zap"
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -28,6 +28,15 @@ func main() {
 		httpPort = ":8080"
 	}
 
+	streamerID1 := os.Getenv("STREAMER_ID1")
+	if streamerID1 == "" {
+		streamerID1 = "A"
+	}
+	streamerType := os.Getenv("STREAMER_TYPE")
+	if streamerType == "" {
+		streamerType = "Temperature"
+	}
+
 	// Establish a connection and get a new client.
 	conn, gclient, err := NewClient(serverAddr)
 	if err != nil {
@@ -35,20 +44,18 @@ func main() {
 	}
 	defer conn.Close()
 	logger.Info("Successfully connected to gRPC server.")
-	
-	
-	
+
 	// ---- Application State ----
-	app := NewApplication(gclient, time.NewTicker(5*time.Second), logger)
+	app := NewApplication(gclient, time.NewTicker(5*time.Second), logger, streamerID1, streamerType)
 	router := echo.New()
 	// Register routes for the Application.
 	app.RegiterRoutes(router)
 	// Serve the HTTP server.
-	
+
 	// Start the data streaming in a separate goroutine.
 	go app.SendDataStream()
-	
-	if err := router.Start(httpPort); err != nil {
+
+ 	if err := router.Start(httpPort); err != nil {
 		logger.Fatalf("Failed to start HTTP server: %v", err)
 	}
 }

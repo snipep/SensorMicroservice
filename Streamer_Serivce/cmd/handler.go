@@ -11,18 +11,22 @@ import (
 )
 
 type Application struct {
-	SensorClient sensor.SensorServiceClient
-	logger 	 	*zap.SugaredLogger
-	ticker       *time.Ticker
-	tickerMutex  *sync.Mutex
+	SensorClient    sensor.SensorServiceClient
+	logger          *zap.SugaredLogger
+	ticker          *time.Ticker
+	tickerMutex     *sync.Mutex
+	FixedSensorID1  string
+	FixedSensorType string
 }
 
-func NewApplication(sensorClient sensor.SensorServiceClient, ticker *time.Ticker, logger *zap.SugaredLogger) *Application {
+func NewApplication(sensorClient sensor.SensorServiceClient, ticker *time.Ticker, logger *zap.SugaredLogger, sensorID1 string, sensorType string) *Application {
 	return &Application{
-		SensorClient: sensorClient,
-		ticker:       ticker,
-		logger: logger,
-		tickerMutex:  &sync.Mutex{},
+		SensorClient:    sensorClient,
+		ticker:          ticker,
+		logger:          logger,
+		tickerMutex:     &sync.Mutex{},
+		FixedSensorID1:  sensorID1,
+		FixedSensorType: sensorType,
 	}
 }
 
@@ -31,7 +35,7 @@ type FrequencyUpdateRequest struct {
 }
 
 // UpdateFrequencyHandler handles the frequency update request.
-func (app *Application) UpdateFrequencyHandler(w http.ResponseWriter, r *http.Request){
+func (app *Application) UpdateFrequencyHandler(w http.ResponseWriter, r *http.Request) {
 	var req FrequencyUpdateRequest
 	if err := readJSON(w, r, &req); err != nil {
 		app.badRequestResponse(w, r, err)
@@ -45,9 +49,7 @@ func (app *Application) UpdateFrequencyHandler(w http.ResponseWriter, r *http.Re
 
 	// Safely update the ticker
 	app.tickerMutex.Lock()
-	app.ticker.Reset(time.Duration(req.FrequencySeconds) * time.Second) // Reset the ticker to the new frequency.
-	// app.ticker.Stop() // Stop the old ticker first.
-	// app.ticker = time.NewTicker(time.Duration(req.FrequencySeconds) * time.Second) // Replace it with a new one.
+	app.ticker.Reset(time.Duration(req.FrequencySeconds) * time.Second)
 	app.tickerMutex.Unlock()
 
 	app.logger.Infof("Frequency updated to %d seconds", req.FrequencySeconds)

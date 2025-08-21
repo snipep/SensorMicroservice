@@ -8,29 +8,14 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// CreateSensorPayload generates a sample SensorData message.
-func CreateSensorPayload(i int) *sensor.SensorDataPayload {
-	sensorMap := map[string]string{
-		"A": "Temperature",
-		"B": "Humidity",
-		"C": "Pressure",
-		"D": "Light",
-	}
-
-	// Extract keys into a slice so we can pick randomly
-	keys := make([]string, 0, len(sensorMap))
-	for k := range sensorMap {
-		keys = append(keys, k)
-	}
-
-	// Pick a random key
-	randKey := keys[rand.IntN(len(keys))]
-
-	// Create a new SensorData message
+// CreateSensorPayload generates a sample SensorData message for the application's fixed sensor.
+func (app *Application) CreateSensorPayload(i int) *sensor.SensorDataPayload {
+	// generate a pseudo-random value for the fixed sensor
+	val := rand.Float32() * 100.0
 	data := &sensor.SensorDataPayload{
-		SensorValue: rand.Float32() * 100.0,
-		SensorType:  sensorMap[randKey], // value
-		Id1:         randKey,            // key
+		SensorValue: val,
+		SensorType:  app.FixedSensorType,
+		Id1:         app.FixedSensorID1,
 		Id2:         int32(1000 + i),
 		Timestamp:   timestamppb.New(time.Now()),
 	}

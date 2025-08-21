@@ -44,8 +44,8 @@ func (app *Application) SendDataStream() {
 		}
 
 		<-app.ticker.C
-		
-		payload := CreateSensorPayload(i)
+
+		payload := app.CreateSensorPayload(i)
 		req := &sensor.SensorData{Data: payload}
 
 		// Send the data. If it fails, we set the stream to nil to force a reconnect on the next loop iteration.
