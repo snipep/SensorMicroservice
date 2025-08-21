@@ -12,12 +12,12 @@ import (
 
 type Server struct {
 	sensor.UnimplementedSensorServiceServer
-	Storage *store.Storage
+	Application *Application
 }
 
-func NewServer(storage *store.Storage) *Server {
+func NewGRPCServer(app *Application) *Server {
 	return &Server{
-		Storage: storage,
+		Application: app,
 	}
 }
 
@@ -61,8 +61,7 @@ func (s *Server) SendSensorData(stream sensor.SensorService_SendSensorDataServer
 			// Timestamp:   timestamp.Format("2006-01-02 15:04:05"),
 			Timestamp: timestamp,
 		}
-
-		err = s.Storage.Sensor.InsertSensorData(stream.Context(), dbData)
+		err = s.Application.store.Sensor.InsertSensorData(stream.Context(), dbData)
 		if err != nil {
 			log.Printf("ERROR: Failed to insert sensor data: %v", err)
 		} else {

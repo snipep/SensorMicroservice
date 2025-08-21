@@ -11,7 +11,7 @@ var (
 )
 
 type Storage struct {
-	Sensor interface{
+	Sensor interface {
 		InsertSensorData(ctx context.Context, data SensorData) error
 		GetSensorByIDs(id1 string, id2 int32, limit, offset int) (*SensorData, error)
 		GetSensorHistory(startTime, endTime time.Time, limit, offset int) ([]SensorData, error)
@@ -23,10 +23,15 @@ type Storage struct {
 		EditSensorHistory(startTime, endTime time.Time, newValue float32) (int64, error)
 		EditSensorHistoryByIDs(id1 string, id2 int32, startTime, endTime time.Time, newValue float32) (int64, error)
 	}
+	User interface {
+		CreateUser(ctx context.Context, name, email, passwordHash string) (int64, error)
+		GetUserByEmail(ctx context.Context, email string) (*User, error)
+	}
 }
 
 func NewStorage(db *sql.DB) *Storage {
 	return &Storage{
 		Sensor: &SensorStore{db: db},
-}
+		User:   &UserStore{db: db},
+	}
 }

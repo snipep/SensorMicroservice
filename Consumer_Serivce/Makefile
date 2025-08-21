@@ -1,3 +1,6 @@
+include .env
+export
+
 # Define variables for directories and the output binary name for easy management.
 BINARY_NAME=streamer-service
 APP_DIR=./cmd/api
@@ -21,6 +24,9 @@ run: build
 	@echo "Running the Streamer Service..."
 	@$(BUILD_DIR)/$(BINARY_NAME)
 
+# run: build
+# 	 go run ./cmd/api
+
 # Generates Go code from the .proto file.
 proto:
 	@protoc --proto_path=$(PROTO_DIR) --go_out=$(PROTO_DIR) --go-grpc_out=$(PROTO_DIR) $(PROTO_DIR)/Sensor.proto
@@ -30,12 +36,11 @@ migrations:
 	@migrate create -seq -ext sql -dir $(MIGRATION_PATH) $(name)
 
 migrate-up:
-	@echo "Applying migrations..."
-	@migrate -path $(MIGRATION_PATH) -database "$(DB_ADDR)" up
+	migrate -path cmd/migrate/migrations -database 'mysql://user:password@tcp(127.0.0.1:3306)/sensordata?charset=utf8mb4&parseTime=True&loc=UTC' -verbose up
 
 migrate-down:
 	@echo "Reverting migrations..."
-	@migrate -path $(MIGRATION_PATH) -database "$(DB_ADDR)" down -all
+	migrate -path cmd/migrate/migrations -database 'mysql://user:password@tcp(127.0.0.1:3306)/sensordata?charset=utf8mb4&parseTime=True&loc=UTC' -verbose down
 
 migrate-force:
 	@echo "Forcing migration version to $(VERSION)..."

@@ -11,27 +11,28 @@ import (
 
 type Application struct {
 	config Config
-	store *store.Storage
-	logger *zap.SugaredLogger	
+	store  *store.Storage
+	logger *zap.SugaredLogger
 }
 
-
 type dbConfig struct {
-	addr string
+	addr         string
 	maxOpenConns int
 	maxIdleConns int
-	maxIdleTime string
+	maxIdleTime  string
 }
 
 type Config struct {
 	addr string
-	db dbConfig
+	db   dbConfig
 }
-
 
 func (app *Application) RegiterRoutes(e *echo.Echo) {
 	// --Routes--
 	apiGroup := e.Group("api/v1")
+	// --- Auth Routes ---
+	apiGroup.POST("/signup", app.signup)
+	apiGroup.POST("/signin", app.signin)
 	sensordata := apiGroup.Group("/sensordata")
 	// --- GET Routes ---
 	sensordata.GET("/query", app.getSensorByIDs)
@@ -44,6 +45,7 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 	sensordata.DELETE("/query-history", app.deleteSensorHistoryByIDs)
 
 	// --- PUT Routes ---
+	// Protected with JWT in main.go middleware
 	sensordata.PUT("/query", app.editSensorDataByID)
 	sensordata.PUT("/history", app.editSensorHistory)
 	sensordata.PUT("/query-history", app.editSensorHistoryByIDs)
@@ -53,11 +55,11 @@ func (app *Application) RegiterRoutes(e *echo.Echo) {
 func (app *Application) run(echo *echo.Echo) error {
 	app.RegiterRoutes(echo)
 	srv := http.Server{
-		Addr:    app.config.addr,
-		Handler: echo,
+		Addr:         app.config.addr,
+		Handler:      echo,
 		WriteTimeout: 15 * time.Second,
-		ReadTimeout: 15 * time.Second,
-		IdleTimeout: time.Minute,
+		ReadTimeout:  15 * time.Second,
+		IdleTimeout:  time.Minute,
 	}
 
 	app.logger.Infow("Server has started", "addr", app.config.addr)

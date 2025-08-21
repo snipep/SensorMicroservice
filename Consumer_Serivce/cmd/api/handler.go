@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type SensorRequest struct {
@@ -32,6 +34,7 @@ type SensorHistoryByIDsRequest struct {
 	Limit     int    `json:"limit"`
 	Offset    int    `json:"offset"`
 }
+
 func (app *Application) getSensorByIDs(c echo.Context) error {
 	var req SensorRequest
 	if err := readJSON(c, &req); err != nil {
@@ -124,7 +127,7 @@ func (app *Application) deleteSensorDataByIDs(c echo.Context) error {
 	}
 
 	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
-		"message":        "Sensor data deleted successfully",
+		"message":       "Sensor data deleted successfully",
 		"rows_affected": rowsAffected,
 	})
 }
@@ -150,7 +153,7 @@ func (app *Application) deleteSensorHistory(c echo.Context) error {
 	}
 
 	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
-		"message":        "Sensor history deleted successfully",
+		"message":       "Sensor history deleted successfully",
 		"rows_affected": rowsAffected,
 	})
 }
@@ -176,11 +179,10 @@ func (app *Application) deleteSensorHistoryByIDs(c echo.Context) error {
 	}
 
 	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
-		"message":        "Sensor history for specified IDs deleted successfully",
+		"message":       "Sensor history for specified IDs deleted successfully",
 		"rows_affected": rowsAffected,
 	})
 }
-
 
 type editByIDRequest struct {
 	ID1      string  `json:"id1"`
@@ -202,7 +204,6 @@ type editByQueryHistoryRequest struct {
 	NewValue  float32 `json:"new_value"`
 }
 
-
 func (app *Application) editSensorDataByID(c echo.Context) error {
 	var req editByIDRequest
 	if err := readJSON(c, &req); err != nil {
@@ -215,7 +216,7 @@ func (app *Application) editSensorDataByID(c echo.Context) error {
 	}
 
 	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
-		"message":        "Sensor data updated successfully",
+		"message":       "Sensor data updated successfully",
 		"rows_affected": rowsAffected,
 	})
 }
@@ -241,7 +242,7 @@ func (app *Application) editSensorHistory(c echo.Context) error {
 	}
 
 	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
-		"message":        "Sensor history updated successfully",
+		"message":       "Sensor history updated successfully",
 		"rows_affected": rowsAffected,
 	})
 }
@@ -267,7 +268,7 @@ func (app *Application) editSensorHistoryByIDs(c echo.Context) error {
 	}
 
 	return app.jsonResponse(c, http.StatusOK, map[string]interface{}{
-		"message":        "Sensor history for specified IDs updated successfully",
+		"message":       "Sensor history for specified IDs updated successfully",
 		"rows_affected": rowsAffected,
 	})
 }
@@ -278,4 +279,64 @@ func applyDefaultPagination(limit, offset *int) {
 	if *offset < 0 {
 		*offset = 0 // Default offset
 	}
+}
+
+// --- Auth additions ---
+// We keep imports minimal here and rely on main.go for JWT middleware.
+
+type signupRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type signinRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (app *Application) signup(c echo.Context) error {
+	var req signupRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if email == "" || req.Password == "" || strings.TrimSpace(req.Name) == "" {
+		return app.badRequestResponse(c, fmt.Errorf("name, email and password are required"))
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+	_, err = app.store.User.CreateUser(c.Request().Context(), req.Name, email, string(hash))
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+	return app.jsonResponse(c, http.StatusCreated, map[string]any{"message": "user created"})
+}
+
+func (app *Application) signin(c echo.Context) error {
+	var req signinRequest
+	if err := readJSON(c, &req); err != nil {
+		return app.badRequestResponse(c, err)
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if email == "" || req.Password == "" {
+		return app.badRequestResponse(c, fmt.Errorf("email and password are required"))
+	}
+	user, err := app.store.User.GetUserByEmail(c.Request().Context(), email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return app.badRequestResponse(c, fmt.Errorf("invalid credentials"))
+		}
+		return app.internalServerError(c, err)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		return app.badRequestResponse(c, fmt.Errorf("invalid credentials"))
+	}
+	token, err := app.generateJWT(user.ID, user.Email)
+	if err != nil {
+		return app.internalServerError(c, err)
+	}
+	return app.jsonResponse(c, http.StatusOK, map[string]any{"token": token})
 }
