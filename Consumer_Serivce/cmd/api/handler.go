@@ -35,7 +35,6 @@ type SensorHistoryByIDsRequest struct {
 func (app *Application) getSensorByIDs(c echo.Context) error {
 	var req SensorRequest
 	if err := readJSON(c, &req); err != nil {
-		app.logger.Errorw("failed to read or parse JSON", "error", err)
 		return app.badRequestResponse(c, err)
 	}
 	applyDefaultPagination(&req.Limit, &req.Offset)
@@ -45,24 +44,15 @@ func (app *Application) getSensorByIDs(c echo.Context) error {
 		if err == sql.ErrNoRows {
 			return app.notFoundResponse(c, err)
 		}
-		// For all other errors, it's an internal server error
-		app.logger.Errorw("failed to fetch sensor", "id1", req.ID1, "id2", req.ID2, "error", err)
 		return app.internalServerError(c, err)
 	}
 
-	err = app.jsonResponse(c, http.StatusOK, sensor)
-	if err != nil {
-		app.logger.Errorw("failed to write JSON response", "id1", req.ID1, "id2", req.ID2, "error", err)
-		return app.internalServerError(c, err)
-	}
-	app.logger.Infow("sensor data fetched successfully", "id1", req.ID1, "id2", req.ID2)
-	return nil
+	return app.jsonResponse(c, http.StatusOK, sensor)
 }
 
 func (app *Application) getSensorHistory(c echo.Context) error {
 	var req SensorHistoryRequest
 	if err := readJSON(c, &req); err != nil {
-		app.logger.Errorw("failed to read or parse JSON for history request", "error", err)
 		return app.badRequestResponse(c, err)
 	}
 	applyDefaultPagination(&req.Limit, &req.Offset)
@@ -70,44 +60,30 @@ func (app *Application) getSensorHistory(c echo.Context) error {
 	// Parse the start and end time strings into time.Time objects
 	startTime, err := time.Parse(time.RFC3339, req.StartTime)
 	if err != nil {
-		app.logger.Errorw("invalid start_time format", "start_time", req.StartTime, "error", err)
 		return app.badRequestResponse(c, err)
 	}
 
 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
 	if err != nil {
-		app.logger.Errorw("invalid end_time format", "end_time", req.EndTime, "error", err)
 		return app.badRequestResponse(c, err)
 	}
 
 	// Call the new store method
 	sensors, err := app.store.Sensor.GetSensorHistory(startTime, endTime, req.Limit, req.Offset)
-	log.Println("sensors:", sensors)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.notFoundResponse(c, err)
 			return err
 		}
-		// This will handle cases where no rows are found gracefully (returns an empty list)
-		app.logger.Errorw("failed to fetch sensor history", "start", req.StartTime, "end", req.EndTime, "error", err)
 		return app.internalServerError(c, err)
 	}
 
-	// Write the successful response
-	err = app.jsonResponse(c, http.StatusOK, sensors)
-	if err != nil {
-		app.logger.Errorw("failed to write JSON response for history", "error", err)
-		return app.internalServerError(c, err)
-	}
-
-	app.logger.Infow("sensor history fetched successfully", "start", req.StartTime, "end", req.EndTime)
-	return nil
+	return app.jsonResponse(c, http.StatusOK, sensors)
 }
 
 func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
 	var req SensorHistoryByIDsRequest
 	if err := readJSON(c, &req); err != nil {
-		app.logger.Errorw("failed to read or parse JSON for combined history request", "error", err)
 		return app.badRequestResponse(c, err)
 	}
 	applyDefaultPagination(&req.Limit, &req.Offset)
@@ -115,32 +91,21 @@ func (app *Application) getSensorHistoryByIDs(c echo.Context) error {
 	// Parse the start and end time strings
 	startTime, err := time.Parse(time.RFC3339, req.StartTime)
 	if err != nil {
-		app.logger.Errorw("invalid start_time format", "start_time", req.StartTime, "error", err)
 		return app.badRequestResponse(c, err)
 	}
 
 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
 	if err != nil {
-		app.logger.Errorw("invalid end_time format", "end_time", req.EndTime, "error", err)
 		return app.badRequestResponse(c, err)
 	}
 
 	sensors, err := app.store.Sensor.GetSensorHistoryByIDs(req.ID1, req.ID2, startTime, endTime, req.Limit, req.Offset)
 	log.Println("sensors:", sensors)
 	if err != nil {
-		app.logger.Errorw("failed to fetch combined sensor history", "id1", req.ID1, "id2", req.ID2, "error", err)
 		return app.internalServerError(c, err)
 	}
 
-	// Write the successful response
-	err = app.jsonResponse(c, http.StatusOK, sensors)
-	if err != nil {
-		app.logger.Errorw("failed to write JSON response for combined history", "error", err)
-		return app.internalServerError(c, err)
-	}
-
-	app.logger.Infow("combined sensor history fetched successfully", "id1", req.ID1, "id2", req.ID2)
-	return nil
+	return app.jsonResponse(c, http.StatusOK, sensors)
 }
 
 func (app *Application) deleteSensorDataByIDs(c echo.Context) error {

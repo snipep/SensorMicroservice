@@ -61,10 +61,9 @@ func (s *SensorStore) GetSensorByIDs(id1 string, id2 int32, limit, offset int) (
 
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()
-	row := s.db.QueryRowContext(ctx, query, id1, id2)
+	row := s.db.QueryRowContext(ctx, query, id1, id2, limit, offset)
 
 	sensor := &SensorData{}
-	// --- FIX: Add sensor.SensorType to the Scan arguments ---
 	err := row.Scan(
 		&sensor.ID1,
 		&sensor.ID2,
@@ -91,7 +90,7 @@ func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time, limit, offs
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()
 
-	rows, err := s.db.QueryContext(ctx, query, startTime, endTime)
+	rows, err := s.db.QueryContext(ctx, query, startTime, endTime, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +99,6 @@ func (s *SensorStore) GetSensorHistory(startTime, endTime time.Time, limit, offs
 	var sensors []SensorData
 	for rows.Next() {
 		var sensor SensorData
-		// The Scan function will correctly parse the database's DATETIME format into the time.Time field.
 		err := rows.Scan(
 			&sensor.ID1,
 			&sensor.ID2,
@@ -135,7 +133,7 @@ func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, en
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()
 
-	rows, err := s.db.QueryContext(ctx, query, id1, id2, startTime, endTime)
+	rows, err := s.db.QueryContext(ctx, query, id1, id2, startTime, endTime, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +159,6 @@ func (s *SensorStore) GetSensorHistoryByIDs(id1 string, id2 int32, startTime, en
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return sensors, nil
 }
 
@@ -172,7 +169,6 @@ func (s *SensorStore) DeleteSensorDataByIDs(id1 string, id2 int32) (int64, error
 	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 	defer cancel()
 
-	// Use ExecContext to execute the delete statement with the provided IDs.
 	result, err := s.db.ExecContext(ctx, query, id1, id2)
 	if err != nil {
 		return 0, err
