@@ -80,6 +80,13 @@ make up         # or: docker compose up --build -d
 make logs       # tail logs
 ```
 
+### API Documentation (Swagger) 
+This service uses Swagger to provide interactive API documentation. You can use this interface to view all available endpoints, see their parameters, and execute API requests directly from your browser.
+
+Once the server is running, access the Swagger UI at:
+
+`http://localhost:8080/swagger/index.html`
+
 ### HTTP API
 
 Base path: `/api/v1`
